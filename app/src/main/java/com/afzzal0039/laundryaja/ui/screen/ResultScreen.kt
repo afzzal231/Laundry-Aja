@@ -4,18 +4,17 @@ import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.afzzal0039.laundryaja.R
-import java.text.SimpleDateFormat
-import java.util.*
+import java.text.NumberFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,33 +32,15 @@ fun ResultScreen(
     val tambahanBiaya = (if (hasJaket) 10000 else 0) + (if (hasSprei) 15000 else 0)
     val total = biayaKiloan + tambahanBiaya
 
-    val localeID = Locale.forLanguageTag("id-ID")
-    val totalFormatted = String.format(localeID, "%,.0f", total)
-
-    fun hitungEstimasi(paket: String): String {
-        val calendar = Calendar.getInstance()
-        if (paket == "Reguler") {
-            calendar.add(Calendar.DAY_OF_YEAR, 2)
-        } else {
-            calendar.add(Calendar.HOUR_OF_DAY, 6)
-        }
-        val format = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault())
-        return format.format(calendar.time)
-    }
+    val rupiahFormat = NumberFormat.getCurrencyInstance(
+        Locale.forLanguageTag("id-ID")
+    )
+    val totalFormatted = rupiahFormat.format(total).replace("Rp", "Rp ")
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(id = R.string.hasil_hitung)) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.primary
-                ),
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
+                title = { Text(stringResource(id = R.string.hasil_hitung)) }
             )
         }
     ) { padding ->
@@ -67,41 +48,70 @@ fun ResultScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Detail: $berat kg ($paket)", fontWeight = FontWeight.Bold)
 
-            if (hasJaket) Text("- Termasuk Cuci Jaket (+Rp 10.000)")
-            if (hasSprei) Text("- Termasuk Cuci Sprei (+Rp 15.000)")
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text("Estimasi Selesai: ${hitungEstimasi(paket)}")
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = "Total Biaya: Rp $totalFormatted",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = {
-                    val shareText = "Laundry $berat kg ($paket)\nEstimasi selesai: ${hitungEstimasi(paket)}\nTotal: Rp $totalFormatted"
-                    val sendIntent = Intent().apply {
-                        action = Intent.ACTION_SEND
-                        putExtra(Intent.EXTRA_TEXT, shareText)
-                        type = "text/plain"
-                    }
-                    context.startActivity(Intent.createChooser(sendIntent, null))
-                },
-                modifier = Modifier.fillMaxWidth()
+            Card(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(8.dp)
             ) {
-                Text(stringResource(id = R.string.btn_bagikan))
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        "Detail Pesanan",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text("Berat: $berat kg")
+                    Text("Paket: $paket")
+
+                    if (hasJaket) Text("Jaket: Ya")
+                    if (hasSprei) Text("Sprei: Ya")
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "Total: $totalFormatted",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Button(
+                        onClick = {
+                            val shareText =
+                                "Estimasi biaya laundry saya ($berat kg, $paket): $totalFormatted"
+                            val sendIntent = Intent().apply {
+                                action = Intent.ACTION_SEND
+                                putExtra(Intent.EXTRA_TEXT, shareText)
+                                type = "text/plain"
+                            }
+                            context.startActivity(Intent.createChooser(sendIntent, null))
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(id = R.string.btn_bagikan))
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedButton(
+                        onClick = onBack,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Kembali")
+                    }
+                }
             }
         }
     }
