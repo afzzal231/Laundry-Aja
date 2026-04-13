@@ -21,6 +21,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.afzzal0039.laundryaja.R
 import com.afzzal0039.laundryaja.ui.theme.LaundryAjaTheme
+import java.text.NumberFormat
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Preview(showBackground = true)
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
@@ -46,6 +49,36 @@ fun MainScreen(
 
     var hasJaket by rememberSaveable { mutableStateOf(false) }
     var hasSprei by rememberSaveable { mutableStateOf(false) }
+
+    var showDialog by remember { mutableStateOf(false) }
+
+    val hargaPerKg = if (paket == "Reguler") 5000 else 8000
+
+    val totalHarga = remember(berat, paket, hasJaket, hasSprei) {
+        val beratInt = berat.toIntOrNull() ?: 0
+        var total = beratInt * hargaPerKg
+        if (hasJaket) total += 10000
+        if (hasSprei) total += 15000
+        total
+    }
+
+    val rupiahFormat = NumberFormat.getCurrencyInstance(
+        Locale.forLanguageTag("id-ID")
+    )
+    val totalFormatted = remember(totalHarga) {
+        rupiahFormat.format(totalHarga).replace("Rp", "Rp ")
+    }
+
+    fun hitungEstimasi(paket: String): String {
+        val calendar = Calendar.getInstance()
+        if (paket == "Reguler") {
+            calendar.add(Calendar.DAY_OF_YEAR, 2)
+        } else {
+            calendar.add(Calendar.HOUR_OF_DAY, 6)
+        }
+        val format = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault())
+        return format.format(calendar.time)
+    }
 
     Scaffold(
         topBar = {
@@ -78,6 +111,7 @@ fun MainScreen(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+
             OutlinedTextField(
                 value = berat,
                 onValueChange = { berat = it; isError = false },
@@ -86,18 +120,30 @@ fun MainScreen(
                 isError = isError,
                 modifier = Modifier.fillMaxWidth()
             )
+
             if (isError) {
-                Text(stringResource(id = R.string.error_input), color = MaterialTheme.colorScheme.error)
+                Text(
+                    stringResource(id = R.string.error_input),
+                    color = MaterialTheme.colorScheme.error
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+
             Text("Item Khusus (Satuan):", fontWeight = FontWeight.Bold)
 
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Checkbox(checked = hasJaket, onCheckedChange = { hasJaket = it })
                 Text("Jaket (+Rp 10.000)")
             }
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Checkbox(checked = hasSprei, onCheckedChange = { hasSprei = it })
                 Text("Sprei (+Rp 15.000)")
             }
@@ -105,27 +151,68 @@ fun MainScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(stringResource(id = R.string.pilih_paket), fontWeight = FontWeight.Bold)
+
             Row(verticalAlignment = Alignment.CenterVertically) {
-                RadioButton(selected = (paket == "Reguler"), onClick = { paket = "Reguler" })
+                RadioButton(
+                    selected = (paket == "Reguler"),
+                    onClick = { paket = "Reguler" }
+                )
                 Text("Reguler")
+
                 Spacer(modifier = Modifier.width(16.dp))
-                RadioButton(selected = (paket == "Ekspres"), onClick = { paket = "Ekspres" })
+
+                RadioButton(
+                    selected = (paket == "Ekspres"),
+                    onClick = { paket = "Ekspres" }
+                )
                 Text("Ekspres")
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text("Total: $totalFormatted", fontWeight = FontWeight.Bold)
+            Text("Selesai: ${hitungEstimasi(paket)}")
 
             Button(
                 onClick = {
                     if (berat.isEmpty() || berat.toDoubleOrNull() == null) {
                         isError = true
                     } else {
-                        onCalculate(berat, paket, hasJaket, hasSprei)
+                        showDialog = true
                     }
                 },
                 modifier = Modifier
-                    .padding(top = 32.dp)
+                    .padding(top = 24.dp)
                     .fillMaxWidth()
             ) {
                 Text(stringResource(id = R.string.btn_hitung))
+            }
+
+            if (showDialog) {
+                AlertDialog(
+                    onDismissRequest = { showDialog = false },
+                    title = { Text("Ringkasan Pesanan") },
+                    text = {
+                        Column {
+                            Text("Berat: $berat kg")
+                            Text("Jaket: ${if (hasJaket) "Ya" else "Tidak"}")
+                            Text("Sprei: ${if (hasSprei) "Ya" else "Tidak"}")
+                            Text("Paket: $paket")
+                            Text("Estimasi: ${hitungEstimasi(paket)}")
+                            Text("Total: $totalFormatted")
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                showDialog = false
+                                onCalculate(berat, paket, hasJaket, hasSprei)
+                            }
+                        ) {
+                            Text("Lanjut")
+                        }
+                    }
+                )
             }
         }
     }
