@@ -96,14 +96,16 @@ fun MainScreen(
             )
         }
     ) { padding ->
+
         Column(
             modifier = Modifier
-                .padding(padding)
                 .fillMaxSize()
+                .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
             Image(
                 painter = painterResource(id = R.drawable.laundry),
                 contentDescription = null,
@@ -132,18 +134,12 @@ fun MainScreen(
 
             Text("Item Khusus (Satuan):", fontWeight = FontWeight.Bold)
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 Checkbox(checked = hasJaket, onCheckedChange = { hasJaket = it })
                 Text("Jaket (+Rp 10.000)")
             }
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 Checkbox(checked = hasSprei, onCheckedChange = { hasSprei = it })
                 Text("Sprei (+Rp 15.000)")
             }
@@ -153,18 +149,12 @@ fun MainScreen(
             Text(stringResource(id = R.string.pilih_paket), fontWeight = FontWeight.Bold)
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                RadioButton(
-                    selected = (paket == "Reguler"),
-                    onClick = { paket = "Reguler" }
-                )
+                RadioButton(selected = (paket == "Reguler"), onClick = { paket = "Reguler" })
                 Text("Reguler")
 
                 Spacer(modifier = Modifier.width(16.dp))
 
-                RadioButton(
-                    selected = (paket == "Ekspres"),
-                    onClick = { paket = "Ekspres" }
-                )
+                RadioButton(selected = (paket == "Ekspres"), onClick = { paket = "Ekspres" })
                 Text("Ekspres")
             }
 
